@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package demo;
+
+option go_package = "httpapi";
+
+
+import "gapi/proto/annotation.proto";
+
+
+message GreetRequest {
+    int64 userId = 1 [(gapi.from_context) = true, (gapi.alias) = "uid"];
+    string name = 2;
+    repeated int32 to = 3;
+}
+
+message GreetReply {
+    string msg = 2;
+}
+
+message GreetCountRequest {
+
+}
+
+message GreetCountReply {
+    map<string, int32> count = 1;
+}
+
+service DemoAPI {
+    option (gapi.server) = "service.demo";
+    option (gapi.default_handler) = "httpjson";
+    option (gapi.default_timeout) = 5000;
+    option (gapi.path_prefix) = "/v1/demo";
+    rpc Greet (GreetRequest) returns (GreetReply) {
+        option (gapi.http) = {
+            post: "/greet"
+            use:  "auth"
+        };
+    }
+    rpc GreetCount (GreetCountRequest) returns (GreetCountReply) {
+        option (gapi.http) = {
+            get: "/greet"
+        };
+    }
+}
