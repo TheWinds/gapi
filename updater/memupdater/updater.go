@@ -23,28 +23,24 @@ func init() {
 	updater = &Updater{changedFunc: nil, srvMD: map[string]*metadata.Metadata{}}
 }
 
-func GetUpdater() *Updater {
-	return updater
+func SetChangedFn(f func(md *metadata.Metadata)) {
+	updater.mu.Lock()
+	updater.changedFunc = f
+	updater.mu.Unlock()
 }
 
-func (u *Updater) SetChangedFn(f func(md *metadata.Metadata)) {
-	u.mu.Lock()
-	u.changedFunc = f
-	u.mu.Unlock()
-}
-
-func (u *Updater) SyncProto(name string, data []byte) error {
-	md, err := u.parseProtoFile(data)
+func SyncProto(name string, data []byte) error {
+	md, err := updater.parseProtoFile(data)
 	if err != nil {
 		return err
 	}
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	if u.changedFunc == nil {
+	updater.mu.Lock()
+	defer updater.mu.Unlock()
+	if updater.changedFunc == nil {
 		return nil
 	}
-	u.srvMD[name] = md
-	u.changedFunc(u.merge())
+	updater.srvMD[name] = md
+	updater.changedFunc(updater.merge())
 	return nil
 }
 
